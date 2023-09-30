@@ -1,7 +1,10 @@
 package puj.sd;
 
+import net.andreinc.mockneat.MockNeat;
+
 import java.sql.Timestamp;
 import java.util.Map;
+import java.util.Random;
 
 public class Sensor {
     String tipo;
@@ -9,8 +12,46 @@ public class Sensor {
     ConfigFile archivoConfiguracion;
     Map<Timestamp, Double> medidas; //se guardan las medidas con su timestamp
 
-    public boolean generarMedidas(){
-        return true;
+    public Sensor(String tipo, double tiempo, ConfigFile archivoConfiguracion) {
+        this.tipo = tipo;
+        this.tiempo = tiempo;
+        this.archivoConfiguracion = archivoConfiguracion;
+    }
+
+    public void generarMedidas() {
+        if(this.archivoConfiguracion == null){
+            System.out.println("No se ha especificado un archivo de configuracion");
+            return;
+        } else {
+            double min;
+            double max;
+            double probabilidadRango = this.archivoConfiguracion.getProbabilidadRango();
+            double probabilidadFueraRango = this.archivoConfiguracion.getProbabilidadFueraRango();
+            double probabilidadError = this.archivoConfiguracion.getProbabilidadError();
+            Random random = new Random();
+            //TODO falta realizar la logica relacionada con el while infinito que cada tiempo t siga generando medidas
+            if (this.tipo.equalsIgnoreCase("temperatura")) {
+                min = 68;
+                max = 89;
+                //TODO según la probabilidad de rango, fuera de rango y error se genera un valor
+                double value = random.doubles(min, max).findFirst().getAsDouble();
+
+            } else if (this.tipo.equalsIgnoreCase("PH")) {
+                min = 6;
+                max = 8;
+                //TODO según la probabilidad de rango, fuera de rango y error se genera un valor
+                double value = random.doubles(min, max).findFirst().getAsDouble();
+
+            } else if (this.tipo.equalsIgnoreCase("oxigeno")) {
+                min = 2;
+                max = 11;
+                //TODO según la probabilidad de rango, fuera de rango y error se genera un valor
+                double value = random.doubles(min, max).findFirst().getAsDouble();
+
+            } else {
+                System.out.println("Tipo de sensor no valido");
+            }
+        }
     }
 
     public String getTipo() {
