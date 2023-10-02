@@ -5,27 +5,32 @@ import java.time.format.DateTimeFormatter;
 import java.util.Random;
 import java.util.stream.IntStream;
 
+import com.example.Monitores.Rango;
+import com.example.Monitores.Tipos;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
+import static com.example.Monitores.Tipos.*;
+
 public class Sensores {
 
-    private String tipo;
+    private Tipos tipo;
     private Double tiempo;
     private Double medida;
+    private ConfigFile configFile;
 
     public Sensores() {
 
     }
 
-    public Sensores(String tipo, Double tiempo) {
+    public Sensores(Tipos tipo, Double tiempo) {
         this.tipo = tipo;
         this.tiempo = tiempo;
     }
 
     // Getters
-    public String getTipo() {
+    public Tipos getTipo() {
         return tipo;
     }
 
@@ -40,7 +45,7 @@ public class Sensores {
     // Métodos de la clase
     public boolean calcularMedida(String direccionArchivo) {
         // Variables necesarias en el programa
-        ConfigFile configFile = new ConfigFile(direccionArchivo);
+        configFile = new ConfigFile(direccionArchivo);
         Double[] probabilidades = new Double[3];
 
         // Leer el archivo
@@ -51,15 +56,15 @@ public class Sensores {
              * Probabilidad[1] FueraRango
              * Probabilidad[2] Error
              */
-            probabilidades[0] = configFile.probabilidadRango;
-            probabilidades[1] = configFile.probabilidadFueraRango;
-            probabilidades[2] = configFile.probabilidadError;
+            probabilidades[0] = configFile.getProbabilidadRango();
+            probabilidades[1] = configFile.getProbabilidadFueraRango();
+            probabilidades[2] = configFile.getProbabilidadError();
 
             // Se escoge un número al azar entre el 0 y 1
             Random r = new Random();
             Double aleatorio = 0 + (1 - 0) * r.nextDouble();
             double limite_inferior = 0, limite_superior = probabilidades[0];
-            String nombres[] = new String[] { "RANGO", "FUERA", "ERROR" };
+            String nombres[] = new String[]{"RANGO", "FUERA", "ERROR"};
             System.out.println("Valor del aleatorio" + aleatorio);
             for (int posicion : IntStream.rangeClosed(0, probabilidades.length - 1).toArray()) {
                 //System.out.println(posicion);
@@ -84,70 +89,76 @@ public class Sensores {
         System.out.println("Probabilidad: " + probabilidad);
         switch (probabilidad) {
             case "RANGO": {
-                switch (this.tipo.toUpperCase()) {
-                    case "TEMPERATURA": {
-                        valor = 68.0 + (89.0 - 68.0) * r.nextDouble();
+                Rango rango = new Rango();
+                switch (this.tipo) {
+                    case TEMPERATURA: {
+                        rango = new Rango(68.0, 89.0, TEMPERATURA);
                         break;
                     }
-                    case "PH": {
-                        valor = 6.0 + (8.0 - 6.0) * r.nextDouble();
+                    case PH: {
+                        rango = new Rango(6.0, 8.0, PH);
                         break;
                     }
-                    case "OXIGENO": {
-                        valor = 2.0 + (11.0 - 2.0) * r.nextDouble();
+                    case OXIGENO: {
+                        rango = new Rango(2.0, 11.0, OXIGENO);
                         break;
                     }
                 }
+                valor = rango.getMin() + (rango.getMax() - rango.getMin()) * r.nextDouble();
                 break;
             }
             // Los valores fuera corresponden a los valores que estan fuera del rango
             case "FUERA": {
+                Rango rango = new Rango();
                 int aleatorio2 = (int) (Math.random() * (1 - 0)) + 0;
-                switch (this.tipo.toUpperCase()) {
+                switch (this.tipo) {
                     // 0 por debajo del intervalo y 1 por encima del intervalo
-                    case "TEMPERATURA": {
+                    case TEMPERATURA: {
                         if (aleatorio2 == 1) {
-                            valor = 89.1 + (115.0 - 89.1) * r.nextDouble();
+                            rango = new Rango(89.1, 115.0, TEMPERATURA);
                         } else {
-                            valor = 0.0 + (67.9 - 0.0) * r.nextDouble();
+                            rango = new Rango(0.0, 67.9, TEMPERATURA);
                         }
                         break;
                     }
-                    case "PH": {
+                    case PH: {
                         if (aleatorio2 == 1) {
-                            valor = 8.1 + (14.0 - 8.1) * r.nextDouble();
+                            rango = new Rango(8.1, 14.0, PH);
                         } else {
-                            valor = 0.0 + (5.9 - 0.0) * r.nextDouble();
+                            rango = new Rango(0.0, 5.9, PH);
                         }
                         break;
                     }
-                    case "OXIGENO": {
+                    case OXIGENO: {
                         if (aleatorio2 == 1) {
-                            valor = 11.1 + (15.0 - 11.1) * r.nextDouble();
+                            rango = new Rango(11.1, 15.0, OXIGENO);
                         } else {
-                            valor = 0.0 + (1.9 - 0.0) * r.nextDouble();
+                            rango = new Rango(0.0, 1.9, OXIGENO);
                         }
                         break;
                     }
                 }
+                valor = rango.getMin() + (rango.getMax() - rango.getMin()) * r.nextDouble();
                 break;
             }
             // Los valores de error corresponden a medidas negativas
             case "ERROR": {
-                switch (this.tipo.toUpperCase()) {
-                    case "TEMPERATURA": {
-                        valor = -1 * (0.1 + (115.0 - 0.0) * r.nextDouble());
+                Rango rango = new Rango();
+                switch (this.tipo) {
+                    case TEMPERATURA: {
+                        rango = new Rango(0.0, 115.0, TEMPERATURA);
                         break;
                     }
-                    case "PH": {
-                        valor = -1 * (0.1 + (14.0 - 0.0) * r.nextDouble());
+                    case PH: {
+                        rango = new Rango(0.0, 14.0, PH);
                         break;
                     }
-                    case "OXIGENO": {
-                        valor = -1 * (0.1 + (115.0 - 0.0) * r.nextDouble());
+                    case OXIGENO: {
+                        rango = new Rango(0.0, 15.0, OXIGENO);
                         break;
                     }
                 }
+                valor = -1 * (0.1 + (rango.getMax() - rango.getMin()) * r.nextDouble());
                 break;
             }
         }
@@ -174,11 +185,16 @@ public class Sensores {
 
         // Se verifica que se hayan ingresado los tres argumentos
         if (args.length < 3) {
-            System.out.println("Debe ingresar tres argumentos para iniciar el programa");
+            System.out.println("Debe ingresar tres argumentos para iniciar el programa\n");
+            System.out.println("Para ejecutar el programa debe ingresar los siguientes argumentos: ");
+            System.out.println("Arg[0] -> Tipo de sensor");
+            System.out.println("Arg[1] -> Tiempo de envio (Segundos)");
+            System.out.println("Arg[2] -> Dirección de archivo de configuración en comillas");
             System.exit(1);
-        } else {
+        } else if ((args[0].equalsIgnoreCase("TEMPERATURA") || args[0].equalsIgnoreCase("PH") || args[0].equalsIgnoreCase("OXIGENO") && Double.parseDouble(args[1]) > 0 && !args[2].isEmpty())) {
             // Se instancia una clase Sensores
-            sensor = new Sensores(args[0], Double.parseDouble(args[1]));
+            Tipos tipo = Tipos.valueOf(args[0].toUpperCase());
+            sensor = new Sensores(tipo, Double.parseDouble(args[1]));
 
             sensor.calcularMedida(args[2]);
 
@@ -198,7 +214,7 @@ public class Sensores {
                     // Se forma el mensaje a enviar
                     mensaje = sensor.getTipo() + "#" + sensor.getMedida() + "#" + dtf.format(now);
 
-                    System.out.println("Mensaje a enviar: " +  mensaje);
+                    System.out.println("Mensaje a enviar: " + mensaje);
 
                     // Se envia la medida al sistema
                     socket.send(mensaje.getBytes(ZMQ.CHARSET));
@@ -207,14 +223,14 @@ public class Sensores {
                     byte[] respuesta = socket.recv(0);
 
                     // Se recibe la respuesta del sistema
-                    System.out.println("Respuesta: " + new String(respuesta,ZMQ.CHARSET));
+                    System.out.println("Respuesta: " + new String(respuesta, ZMQ.CHARSET));
 
 
                     /*
                      * Forma como se captura el mensaje enviado de un proceso
-                     * 
+                     *
                      * String[]contenido = mensaje.split("-");
-                     * 
+                     *
                      * Arrays.asList(contenido).stream().forEach(System.out::println);
                      */
 
@@ -225,6 +241,13 @@ public class Sensores {
                 e.printStackTrace();
             }
 
+        } else {
+            System.out.println("Recuerde:");
+            System.out.println("Debe ingresar un tipo de sensor valido");
+            System.out.println("Los tipos de sensor validos son: TEMPERATURA, PH y OXIGENO");
+            System.out.println("El tiempo de envio debe ser mayor a 0");
+            System.out.println("La dirección del archivo de configuración no puede estar vacia");
+            System.exit(1);
         }
 
     }
