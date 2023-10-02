@@ -196,8 +196,6 @@ public class Sensores {
             Tipos tipo = Tipos.valueOf(args[0].toUpperCase());
             sensor = new Sensores(tipo, Double.parseDouble(args[1]));
 
-            sensor.calcularMedida(args[2]);
-
             try (ZContext context = new ZContext()) {
                 // Mientras el proceso se este ejecutando
                 while (!Thread.currentThread().isInterrupted()) {
