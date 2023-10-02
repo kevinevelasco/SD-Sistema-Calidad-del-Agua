@@ -1,4 +1,4 @@
-package com.example.distribuidos;
+package com.example.Sensores;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -62,9 +62,8 @@ public class Sensores {
             String nombres[] = new String[] { "RANGO", "FUERA", "ERROR" };
             System.out.println("Valor del aleatorio" + aleatorio);
             for (int posicion : IntStream.rangeClosed(0, probabilidades.length - 1).toArray()) {
-                System.out.println(posicion);
-                System.out
-                        .println("El limite inferior: " + limite_inferior + "y el limite superior: " + limite_superior);
+                //System.out.println(posicion);
+                System.out.println("El limite inferior: " + limite_inferior + " y el limite superior: " + limite_superior);
                 if (limite_inferior <= aleatorio && aleatorio < limite_superior && limite_superior > 0) {
                     this.medida = generarMedida(nombres[posicion]);
                 }
@@ -166,8 +165,9 @@ public class Sensores {
 
         /*
          * Se definen las variables requeridas
+         * El objeto de clase sensores para hacer la generación de los datos aleatorios
+         * El objeto encargado de formatear fechas y tiempos
          */
-
         Sensores sensor;
         String mensaje;
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
@@ -185,7 +185,7 @@ public class Sensores {
             try (ZContext context = new ZContext()) {
                 // Mientras el proceso se este ejecutando
                 while (!Thread.currentThread().isInterrupted()) {
-                    sensor.calcularMedida(args[2]);
+
                     // El valor del sensor se envia al sistema publicador subscriptor
                     sensor.calcularMedida(args[2]);
                     // Socket que habla con el sistema
@@ -196,13 +196,19 @@ public class Sensores {
                     LocalDateTime now = LocalDateTime.now();
 
                     // Se forma el mensaje a enviar
-                    mensaje = sensor.getTipo() + "-" + sensor.getMedida() + "-" + dtf.format(now);
+                    mensaje = sensor.getTipo() + "#" + sensor.getMedida() + "#" + dtf.format(now);
+
+                    System.out.println("Mensaje a enviar: " +  mensaje);
 
                     // Se envia la medida al sistema
                     socket.send(mensaje.getBytes(ZMQ.CHARSET));
 
                     // Se recibe la respuesta del sistema
-                    socket.recv(0);
+                    byte[] respuesta = socket.recv(0);
+
+                    // Se recibe la respuesta del sistema
+                    System.out.println("Respuesta: " + new String(respuesta,ZMQ.CHARSET));
+
 
                     /*
                      * Forma como se captura el mensaje enviado de un proceso
@@ -212,7 +218,7 @@ public class Sensores {
                      * Arrays.asList(contenido).stream().forEach(System.out::println);
                      */
 
-                    // Se coloca al sensor a dormir
+                    // Se coloca al sensor a dormir según el tiempo declarado en los argumentos
                     Thread.sleep(sensor.getTiempo().intValue() * 1000);
                 }
             } catch (InterruptedException e) {

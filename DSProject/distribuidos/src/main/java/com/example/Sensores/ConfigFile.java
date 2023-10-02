@@ -1,4 +1,4 @@
-package com.example.distribuidos;
+package com.example.Sensores;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
