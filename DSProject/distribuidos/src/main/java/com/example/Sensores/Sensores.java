@@ -200,6 +200,8 @@ public class Sensores {
                 // Mientras el proceso se este ejecutando
                 while (!Thread.currentThread().isInterrupted()) {
 
+                    System.out.println("El tipo del sensor es "+tipo);
+
                     // El valor del sensor se envia al sistema publicador subscriptor
                     sensor.calcularMedida(args[2]);
                     // Socket que habla con el sistema
@@ -210,7 +212,7 @@ public class Sensores {
                     LocalDateTime now = LocalDateTime.now();
 
                     // Se forma el mensaje a enviar
-                    mensaje = sensor.getTipo() + "#" + sensor.getMedida() + "#" + dtf.format(now);
+                    mensaje = sensor.getTipo().toString().toUpperCase() + "#" + sensor.getMedida() + "#" + dtf.format(now);
 
                     System.out.println("Mensaje a enviar: " + mensaje);
 
