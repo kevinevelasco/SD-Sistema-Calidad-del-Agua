@@ -56,7 +56,7 @@ public class Replica {
                 poller.register(replica.requester, ZMQ.Poller.POLLIN);
 
                 // Se espera por una respuesta o TIMEOUT
-                if (poller.poll(7000) == 0) {
+                if (poller.poll(12000) == 0) {
                     System.out.println("No se recibió una respuesta");
 
                     // Close the existing socket and context
@@ -82,14 +82,9 @@ public class Replica {
 
     private static void runPowerShellCommand(String tipo) {
         try {
-
-            // c:; cd 'c:\Users\estudiante\Desktop\DSProject\distribuidos'; & 'C:\Program
-            // Files\Java\jdk1.8.0_202\bin\java.exe' '-cp'
-            // 'C:\Users\ESTUDI~1\AppData\Local\Temp\2\cp_cfsa52b0dkw9v1rvaqdfzbfc2.jar'
-            // 'com.example.Monitores.Monitores'
             String argumento = tipo + "#REPLICA";
 
-            String comando = "c:; cd 'c:\\Users\\estudiante\\Desktop\\DSProject\\distribuidos'; java '-cp'  'C:\\Users\\ESTUDI~1\\AppData\\Local\\Temp\\2\\cp_cfsa52b0dkw9v1rvaqdfzbfc2.jar' 'com.example.Monitores.Monitores' "
+            String comando = "c:; cd 'c:\\Users\\estudiante\\Desktop\\Proyecto\\DSProject\\distribuidos'; java '-cp'  'C:\\Users\\ESTUDI~1\\AppData\\Local\\Temp\\2\\cp_cfsa52b0dkw9v1rvaqdfzbfc2.jar' 'com.example.Monitores.Monitores' "
                     + argumento;
 
             // Command to run PowerShell command with pause at the end

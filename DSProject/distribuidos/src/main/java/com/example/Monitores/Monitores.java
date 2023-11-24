@@ -15,7 +15,6 @@ public class Monitores {
     private Tipos tipo;
     private String puerto;
 
-
     public Monitores(Tipos tipo) {
         this.tipo = tipo;
         switch (tipo) {
@@ -67,7 +66,6 @@ public class Monitores {
 
     }
 
-
     public void suscribirmeSensor(ZMQ.Socket subscriber) {
         // Se hace que el suscriptor se subscriba al tema específico
         /*
@@ -82,14 +80,12 @@ public class Monitores {
         System.out.println("Me suscribi al sensor");
     }
 
-    public void recibirMedidas(ZMQ.Socket subscriber) {
+    public void recibirMedidas(byte[] mensaje) {
 
         // Crear código para replica
-        
 
         System.out.println("Recibo medidas");
-
-        byte[] mensaje = subscriber.recv();
+        
         // Convertir mensaje en datos atomicos
         String[] datos = new String(mensaje, ZMQ.CHARSET).split("#");
 
@@ -99,9 +95,8 @@ public class Monitores {
         // El dato de la fecha en que se genero el valor
         String fecha = datos[2];
 
-
         if (validarMedidas(valor)) {
-            //guardarEnBD(valor, fecha);
+            // guardarEnBD(valor, fecha);
             System.out.println("[ Hora" + " : " + this.tipo + " ] -> " + fecha + ":" + valor);
         } else {
             generarAlarma(valor, fecha);
@@ -110,10 +105,9 @@ public class Monitores {
     }
 
     private void generarAlarma(Double valor, String fecha) {
-        //TODO para la siguiente entrega
+        // TODO para la siguiente entrega
         System.out.println("\nAlarma generada: " + valor + " " + fecha);
     }
-
 
     public boolean validarMedidas(Double valor) {
         Validador validador = new Validador();
@@ -121,34 +115,46 @@ public class Monitores {
     }
 
     public static void main(String[] args) {
-        String[] presets = {"temperatura", "ph", "oxigeno"};
+        String[] presets = { "temperatura", "ph", "oxigeno" };
         if (args.length != 1) {
             System.out.println("Forma de uso: Ingrese tipo de sensor{temperatura, ph, oxigeno}");
             System.exit(1);
-        } else if (args[0].equalsIgnoreCase("temperatura") || args[0].equalsIgnoreCase("ph") || args[0].equalsIgnoreCase("oxigeno")) {
+        } else if (args[0].equalsIgnoreCase("temperatura") || args[0].equalsIgnoreCase("ph")
+                || args[0].equalsIgnoreCase("oxigeno")) {
             String[] split = args[0].split("#");
             String tipo = Arrays.stream(presets).filter(x -> x.equalsIgnoreCase(split[0])).findFirst().orElse(null);
             Tipos tipoSensor = Tipos.valueOf(tipo.toUpperCase());
             // Se instancia un objeto Monitor
             Monitores monitor = new Monitores(tipoSensor);
 
+            if (!args[0].contains("REPLICA")) {
+                runPowerShellCommand(monitor.tipo.toString());
+            }
+
             try (ZMQ.Context context = ZMQ.context(1);
-                 ZMQ.Socket subscriber = context.socket(SocketType.SUB)) {
+                    ZMQ.Socket subscriber = context.socket(SocketType.SUB);
+                    ZMQ.Socket replier = context.socket(SocketType.REP)) {
 
                 subscriber.connect("tcp://127.0.0.1:5554"); // Se conecta al sensor publicador
 
-                if(!args[0].contains("REPLICA")){
-                    runPowerShellCommand(monitor.tipo.toString());
-                }
-
                 // Se suscribe al sensor al publicador
                 monitor.suscribirmeSensor(subscriber);
-                System.out.println("Monitor " + tipo + " conectado al sistema");
-                while (true) {
-                    System.out.println("Esperando medidas...");
+
+                String direccion = "tcp://localhost:" + monitor.puerto;
+                replier.bind(direccion);
+                System.out.println(monitor.puerto);
+
+                while (!Thread.currentThread().isInterrupted()) {
+                    String message = "Monitor de " + tipo + " esta vivo";
+                    replier.recv();
+                    replier.send(message.getBytes(ZMQ.CHARSET));
                     // Se recibe la medida enviada
-                    monitor.recibirMedidas(subscriber);
+                    byte[] mensaje = subscriber.recv();
+                    // Enviar un mensaje de vida
+                    monitor.recibirMedidas(mensaje);
+
                 }
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -158,4 +164,3 @@ public class Monitores {
         }
     }
 }
-
